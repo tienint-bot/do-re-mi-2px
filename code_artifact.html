@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>五線譜音高雙人對決 (ㄉㄛ、ㄖㄨㄝ、ㄇㄧ)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    }
+    .shake-anim {
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-3px, 0, 0); }
+      20%, 80% { transform: translate3d(5px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+      40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+    .pop-anim {
+      animation: pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.85); opacity: 0.7; }
+      50% { transform: scale(1.06); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .face-to-face {
+      transform: rotate(180deg);
+    }
+    .locked-panel {
+      pointer-events: none;
+      filter: grayscale(0.4) opacity(0.7);
+    }
+    .solfege-btn {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Specific fine-tuning for three-glyph phonetic Re to prevent overflow */
+    .solfege-btn-re {
+      font-size: clamp(0.68rem, 2vw, 1.05rem) !important;
+      letter-spacing: -0.04em;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between overflow-hidden">
+
+  <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700/60 px-3 sm:px-4 py-2 flex items-center justify-between z-30 shadow-md">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl">🎼</span>
+      <div>
+        <h1 class="font-black text-base sm:text-lg md:text-xl tracking-wide bg-gradient-to-r from-cyan-400 via-sky-300 to-pink-400 bg-clip-text text-transparent">
+          五線譜音感大對決
+        </h1>
+        <p class="text-xs text-slate-400 hidden sm:block">題目範圍：$c^1 \sim e^1$（僅限 ㄉㄛ、ㄖㄨㄝ、ㄇㄧ）</p>
+      </div>
+    </div>
+
+    <!-- Center Status / Mode Options -->
+    <div class="flex items-center gap-2">
+      <div id="round-status-badge" class="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-700 text-xs text-amber-300 font-bold">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="round-status-text">搶答進行中...</span>
+      </div>
+
+      <!-- Target Score / Target Settings -->
+      <div class="bg-slate-900/90 px-2.5 py-1 rounded-xl flex items-center text-xs gap-1 border border-slate-700">
+        <span class="text-slate-400">目標:</span>
+        <span class="font-bold text-amber-400">先達 10 分獲勝</span>
+      </div>
+
+      <!-- Face to Face rotation toggle -->
+      <button id="rotate-left-btn" title="切換左方為面對面視角" class="p-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm active:scale-95 transition-all text-cyan-300">
+        🔄 面對面
+      </button>
+
+      <!-- Audio Mute Toggle -->
+      <button id="audio-btn" class="p-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs sm:text-sm active:scale-95 transition-all">
+        🔊
+      </button>
+
+      <!-- Reset Game -->
+      <button id="reset-btn" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm active:scale-95 transition-all font-black">
+        重新開局
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 p-2 sm:p-4 max-w-7xl mx-auto w-full relative">
+    
+    <!-- LEFT ARENA (PLAYER 1 / 藍隊) -->
+    <section id="panel-left" class="flex flex-col justify-between bg-slate-800/70 rounded-3xl p-3 sm:p-5 border-2 border-cyan-500/40 shadow-xl relative transition-all duration-300">
+      
+      <!-- Top Info: Player & Score -->
+      <div class="flex justify-between items-center mb-1">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+          <span class="font-extrabold text-cyan-400 text-base sm:text-lg">左側玩家 (Player 1)</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="p1-lock-indicator" class="hidden text-xs px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700/60 font-bold">
+            🔒 答錯鎖定
+          </div>
+          <div class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-700/50">
+            連勝: <span id="p1-streak" class="font-black text-cyan-400">0</span> 🔥
+          </div>
+          <div class="text-2xl sm:text-3xl font-black text-cyan-300">
+            <span id="p1-score">0</span> <span class="text-xs text-slate-400 font-normal">分</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Musical Staff Area -->
+      <div class="relative w-full flex-1 min-h-[160px] max-h-[220px] bg-slate-900/90 rounded-2xl border border-cyan-500/30 flex items-center justify-center p-2 my-2 overflow-hidden shadow-inner">
+        <div id="p1-staff-container" class="w-full h-full flex items-center justify-center">
+          <!-- Staff SVG injected here -->
+        </div>
+        
+        <!-- Feedback indicator overlay -->
+        <div id="p1-feedback" class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-3xl font-black transition-opacity opacity-0 rounded-2xl"></div>
+      </div>
+
+      <!-- Prompt Info & Solfège Buttons -->
+      <div class="mt-1">
+        <div class="flex justify-between items-center text-xs text-cyan-300/80 font-medium mb-1.5 px-1">
+          <span>辨識上方五線譜音高：</span>
+          <span id="p1-prompt-hint" class="text-cyan-400 font-bold">請搶答！</span>
+        </div>
+        <div id="p1-btn-group" class="grid grid-cols-3 gap-2 sm:gap-3">
+          <button data-player="1" data-note="ㄉㄛ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-95 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄉㄛ</button>
+          <button data-player="1" data-note="ㄖㄨㄝ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-95 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄖㄨㄝ</button>
+          <button data-player="1" data-note="ㄇㄧ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-95 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄇㄧ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT ARENA (PLAYER 2 / 粉紫隊) -->
+    <section id="panel-right" class="flex flex-col justify-between bg-slate-800/70 rounded-3xl p-3 sm:p-5 border-2 border-pink-500/40 shadow-xl relative transition-all duration-300">
+      
+      <!-- Top Info: Player & Score -->
+      <div class="flex justify-between items-center mb-1">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-pink-400 shadow-[0_0_8px_#f472b6]"></span>
+          <span class="font-extrabold text-pink-400 text-base sm:text-lg">右側玩家 (Player 2)</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="p2-lock-indicator" class="hidden text-xs px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700/60 font-bold">
+            🔒 答錯鎖定
+          </div>
+          <div class="text-xs px-2.5 py-0.5 rounded-full bg-pink-950/80 text-pink-300 border border-pink-700/50">
+            連勝: <span id="p2-streak" class="font-black text-pink-400">0</span> 🔥
+          </div>
+          <div class="text-2xl sm:text-3xl font-black text-pink-300">
+            <span id="p2-score">0</span> <span class="text-xs text-slate-400 font-normal">分</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Musical Staff Area -->
+      <div class="relative w-full flex-1 min-h-[160px] max-h-[220px] bg-slate-900/90 rounded-2xl border border-pink-500/30 flex items-center justify-center p-2 my-2 overflow-hidden shadow-inner">
+        <div id="p2-staff-container" class="w-full h-full flex items-center justify-center">
+          <!-- Staff SVG injected here -->
+        </div>
+
+        <!-- Feedback indicator overlay -->
+        <div id="p2-feedback" class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-3xl font-black transition-opacity opacity-0 rounded-2xl"></div>
+      </div>
+
+      <!-- Prompt Info & Solfège Buttons -->
+      <div class="mt-1">
+        <div class="flex justify-between items-center text-xs text-pink-300/80 font-medium mb-1.5 px-1">
+          <span>辨識上方五線譜音高：</span>
+          <span id="p2-prompt-hint" class="text-pink-400 font-bold">請搶答！</span>
+        </div>
+        <div id="p2-btn-group" class="grid grid-cols-3 gap-2 sm:gap-3">
+          <button data-player="2" data-note="ㄉㄛ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-95 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄉㄛ</button>
+          <button data-player="2" data-note="ㄖㄨㄝ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-95 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄖㄨㄝ</button>
+          <button data-player="2" data-note="ㄇㄧ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-95 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄇㄧ</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Winner Modal -->
+  <div id="winner-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl pop-anim">
+      <div class="text-6xl mb-3" id="winner-trophy">🏆</div>
+      <h2 id="winner-title" class="text-2xl sm:text-3xl font-black text-amber-300 mb-2">左側玩家獲勝！</h2>
+      <p id="winner-desc" class="text-slate-300 text-sm mb-6">率先累積達到 10 分，展現超凡音感與敏捷反應！</p>
+      
+      <div class="flex justify-center gap-3">
+        <button id="modal-restart-btn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-lg hover:brightness-110 active:scale-95 transition-all shadow-lg">
+          再戰一局 🎵
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio unlock banner (for iOS / WebAudio touch policies) -->
+  <div id="audio-start-banner" class="fixed bottom-3 left-1/2 -translate-x-1/2 bg-slate-800/95 border border-indigo-500/50 text-indigo-200 text-xs px-4 py-2 rounded-full shadow-lg z-40 flex items-center gap-2 cursor-pointer hover:bg-slate-700">
+    <span>🎵 點擊任意處啟用真實鋼琴音效</span>
+  </div>
+
+  <script>
+    let isMuted = false;
+    let synth = null;
+
+    function initAudio() {
+      if (!synth) {
+        // High quality polyphonic piano-like synth
+        synth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'triangle8' },
+          envelope: {
+            attack: 0.005,
+            decay: 0.8,
+            sustain: 0.15,
+            release: 1.2
+          }
+        }).toDestination();
+        synth.volume.value = -3;
+      }
+      if (Tone.context.state !== 'running') {
+        Tone.start();
+      }
+      const banner = document.getElementById('audio-start-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    function playTone(pitch) {
+      if (isMuted) return;
+      initAudio();
+      try {
+        synth.triggerAttackRelease(pitch, "8n");
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function playSoundEffect(type) {
+      if (isMuted) return;
+      initAudio();
+      try {
+        if (type === 'correct') {
+          synth.triggerAttackRelease(["C5", "G5"], "16n");
+        } else if (type === 'wrong') {
+          synth.triggerAttackRelease(["C3", "Db3"], "8n");
+        } else if (type === 'win') {
+          synth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "4n");
+        }
+      } catch (e) {}
+    }
+
+    // Note list from c1 to c2 (Treble Clef C4 to C5)
+    // 5 lines:
+    // Line 5 (F5) -> y = 35
+    // Line 4 (D5) -> y = 51
+    // Line 3 (B4) -> y = 67
+    // Note list from c1 to e1 (Treble Clef C4 to E4)
+    // 5 lines:
+    // Line 5 (F5) -> y = 35
+    // Line 4 (D5) -> y = 51
+    // Line 3 (B4) -> y = 67
+    // Line 2 (G4) -> y = 83 (Clef spiral center)
+    // Line 1 (E4) -> y = 99
+    const NOTE_POOL = [
+      { id: 'C4', name: 'c1 (中央 C)', solfege: 'ㄉㄛ', freq: 'C4', step: -2, hasLedgerBelow: true },
+      { id: 'D4', name: 'd1 (下加一間)', solfege: 'ㄖㄨㄝ', freq: 'D4', step: -1, hasLedgerBelow: false },
+      { id: 'E4', name: 'e1 (第一線)', solfege: 'ㄇㄧ', freq: 'E4', step: 0, hasLedgerBelow: false }
+    ];
+
+    // Global duel game state
+    const state = {
+      targetScore: 10,
+      isGameOver: false,
+      isLeftFlipped: false,
+      roundActive: true,
+      p1: {
+        score: 0,
+        streak: 0,
+        currentNote: null,
+        isWrongThisRound: false,
+        locked: false
+      },
+      p2: {
+        score: 0,
+        streak: 0,
+        currentNote: null,
+        isWrongThisRound: false,
+        locked: false
+      }
+    };
+
+    function renderStaffSVG(note, player) {
+      const width = 360;
+      const height = 150;
+      const lineSpacing = 16;
+      const bottomLineY = 99; // E4 line
+      
+      // Calculate note center Y based on step: step 0 = E4, step 2 = G4, step -2 = C4
+      const noteCenterY = bottomLineY - (note.step * (lineSpacing / 2));
+      const noteCenterX = 230; // placed to the right of treble clef
+
+      const clefColor = player === 1 ? '#38bdf8' : '#f472b6';
+      const noteColor = player === 1 ? '#06b6d4' : '#ec4899';
+      const staffLineColor = '#64748b';
+
+      let ledgerLineSvg = '';
+      if (note.hasLedgerBelow) {
+        // Ledger line for C4 (at y = 115)
+        const ledgerY = bottomLineY + lineSpacing;
+        ledgerLineSvg = `<line x1="${noteCenterX - 22}" y1="${ledgerY}" x2="${noteCenterX + 22}" y2="${ledgerY}" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round"/>`;
+      }
+
+      // Stem direction: B4 (step 4) and above stem down on left; below B4 stem up on right
+      let stemSvg = '';
+      if (note.step >= 4) {
+        stemSvg = `<line x1="${noteCenterX - 9}" y1="${noteCenterY}" x2="${noteCenterX - 9}" y2="${noteCenterY + 44}" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>`;
+      } else {
+        stemSvg = `<line x1="${noteCenterX + 9}" y1="${noteCenterY}" x2="${noteCenterX + 9}" y2="${noteCenterY - 44}" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>`;
+      }
+
+      /* 
+        Standard Classical G-Clef (Treble Clef):
+        Carefully tuned SVG path where the main inner spiral wraps exactly around y = 83 (2nd line G4).
+      */
+      const standardTrebleClefPath = `
+        <g fill="${clefColor}" transform="translate(36, 12) scale(0.88)">
+          <path d="M24.8 62.3 C23.1 59.5 20.2 58.1 16.4 58.1 C11.3 58.1 7.2 62.2 7.2 68.3 C7.2 74.2 11.5 78.9 17.5 78.9 C23.8 78.9 28.7 74.1 28.7 67.8 C28.7 62.4 25.4 58.3 20.6 55.7 L 22.1 46.8 C 24.8 48.3 27.9 49.3 31.2 49.3 C37.1 49.3 41.5 45.1 41.5 39.2 C41.5 33.1 36.8 28.6 30.7 28.6 C26.9 28.6 23.5 30.4 21.4 33.3 L 18.2 13.9 C20.3 11.8 23.4 10.4 26.8 10.4 C31.1 10.4 34.6 12.8 35.8 16.6 C36.2 17.8 37.3 18.5 38.6 18.5 C40.1 18.5 41.3 17.3 41.3 15.8 C41.3 15.1 41.0 14.4 40.5 13.8 C38.3 8.3 32.9 4.6 26.6 4.6 C21.8 4.6 17.4 6.8 14.5 10.4 C12.8 12.5 11.7 15.0 11.2 17.7 L 7.3 41.6 C5.6 43.4 4.3 45.6 3.4 48.1 C2.0 52.0 2.2 56.4 3.9 60.3 C5.8 64.6 9.4 67.8 13.9 69.1 L 12.7 61.6 C10.1 60.5 8.3 57.9 8.3 54.8 C8.3 50.8 11.4 47.4 15.6 47.0 L 19.3 70.3 C14.4 70.8 10.5 74.7 10.5 79.7 C10.5 85.3 15.2 89.8 21.0 89.8 C27.6 89.8 33.0 84.7 33.0 77.8 C33.0 70.9 28.8 65.5 22.8 63.3 L 24.8 62.3 Z M 20.3 38.1 C 21.8 35.8 24.3 34.2 27.2 34.2 C 30.5 34.2 33.1 36.7 33.1 40.1 C 33.1 43.4 30.6 45.9 27.4 45.9 C 24.8 45.9 22.6 44.3 21.5 42.1 L 20.3 38.1 Z M 16.7 73.6 C 13.4 73.6 10.8 70.9 10.8 67.7 C 10.8 64.4 13.4 61.8 16.7 61.8 C 19.1 61.8 21.2 63.2 22.1 65.4 L 16.7 73.6 Z"/>
+          <!-- Bottom hanging drop terminal -->
+          <circle cx="18.5" cy="104.5" r="5.2"/>
+        </g>
+      `;
+
+      return `
+        <svg viewBox="0 0 ${width} ${height}" class="w-full h-full select-none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 5 Staff Lines -->
+          <line x1="25" y1="35" x2="${width - 25}" y2="35" stroke="${staffLineColor}" stroke-width="1.8" />
+          <line x1="25" y1="51" x2="${width - 25}" y2="51" stroke="${staffLineColor}" stroke-width="1.8" />
+          <line x1="25" y1="67" x2="${width - 25}" y2="67" stroke="${staffLineColor}" stroke-width="1.8" />
+          <line x1="25" y1="83" x2="${width - 25}" y2="83" stroke="${staffLineColor}" stroke-width="1.8" />
+          <line x1="25" y1="99" x2="${width - 25}" y2="99" stroke="${staffLineColor}" stroke-width="1.8" />
+
+          <!-- Staff Left and Right Bar lines -->
+          <line x1="25" y1="35" x2="25" y2="99" stroke="${staffLineColor}" stroke-width="2.2" />
+          <line x1="${width - 25}" y1="35" x2="${width - 25}" y2="99" stroke="${staffLineColor}" stroke-width="2.2" />
+
+          <!-- High Precision Treble Clef -->
+          ${standardTrebleClefPath}
+
+          <!-- Ledger line if needed -->
+          ${ledgerLineSvg}
+
+          <!-- Note Stem -->
+          ${stemSvg}
+
+          <!-- Note Head (Rotated Ellipse) -->
+          <ellipse cx="${noteCenterX}" cy="${noteCenterY}" rx="13" ry="9.5" fill="${noteColor}" transform="rotate(-20 ${noteCenterX} ${noteCenterY})" stroke="#ffffff" stroke-width="1.6" class="drop-shadow-md"/>
+        </svg>
+      `;
+    }
+
+    function getRandomNoteExcluding(excludeNoteId) {
+      const candidates = NOTE_POOL.filter(n => n.id !== excludeNoteId);
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function startNewRound() {
+      state.roundActive = true;
+      state.p1.locked = false;
+      state.p1.isWrongThisRound = false;
+      state.p2.locked = false;
+      state.p2.isWrongThisRound = false;
+
+      // Unlock UI elements
+      document.getElementById('p1-lock-indicator').classList.add('hidden');
+      document.getElementById('p2-lock-indicator').classList.add('hidden');
+      document.getElementById('panel-left').classList.remove('locked-panel');
+      document.getElementById('panel-right').classList.remove('locked-panel');
+      
+      document.getElementById('p1-prompt-hint').textContent = '請搶答！';
+      document.getElementById('p1-prompt-hint').className = 'text-cyan-400 font-bold';
+      document.getElementById('p2-prompt-hint').textContent = '請搶答！';
+      document.getElementById('p2-prompt-hint').className = 'text-pink-400 font-bold';
+
+      document.getElementById('round-status-text').textContent = '搶答進行中...先答對者得分！';
+
+      // Pick two distinct notes for left and right
+      const p1Index = Math.floor(Math.random() * NOTE_POOL.length);
+      state.p1.currentNote = NOTE_POOL[p1Index];
+      state.p2.currentNote = getRandomNoteExcluding(state.p1.currentNote.id);
+
+      // Render both SVG staffs
+      renderStaff(1);
+      renderStaff(2);
+    }
+
+    function renderStaff(playerNum) {
+      const container = document.getElementById(playerNum === 1 ? 'p1-staff-container' : 'p2-staff-container');
+      const note = playerNum === 1 ? state.p1.currentNote : state.p2.currentNote;
+      if (!note || !container) return;
+
+      container.innerHTML = renderStaffSVG(note, playerNum);
+      container.classList.remove('pop-anim');
+      void container.offsetWidth; // trigger CSS reflow
+      container.classList.add('pop-anim');
+    }
+
+    function handleAnswer(playerNum, selectedSolf) {
+      if (state.isGameOver || !state.roundActive) return;
+      
+      const isP1 = playerNum === 1;
+      const myState = isP1 ? state.p1 : state.p2;
+      const oppState = isP1 ? state.p2 : state.p1;
+      const oppNum = isP1 ? 2 : 1;
+
+      // If player is already locked or wrong in this round, ignore
+      if (myState.locked) return;
+
+      const correctSolf = myState.currentNote.solfege;
+      const notePitch = myState.currentNote.freq;
+      const feedbackEl = document.getElementById(isP1 ? 'p1-feedback' : 'p2-feedback');
+      const oppFeedbackEl = document.getElementById(isP1 ? 'p2-feedback' : 'p1-feedback');
+      const panelEl = document.getElementById(isP1 ? 'panel-left' : 'panel-right');
+      const oppPanelEl = document.getElementById(isP1 ? 'panel-right' : 'panel-left');
+
+      if (selectedSolf === correctSolf) {
+        /* 
+          =======================================
+          CASE 1: CORRECT ANSWER
+          =======================================
+          - This player wins the round and gains 1 point.
+          - Opponent is immediately LOCKED OUT ("另一方就不能再點").
+          - Round ends, then auto progresses after a brief delay.
+        */
+        state.roundActive = false;
+        myState.score += 1;
+        myState.streak += 1;
+        oppState.streak = 0;
+        
+        // Lock both players until next round
+        myState.locked = true;
+        oppState.locked = true;
+
+        playTone(notePitch);
+
+        // Feedback for winner
+        showFeedback(feedbackEl, `✅ 答對！${correctSolf}`, 'text-emerald-400 bg-emerald-950/80 border-2 border-emerald-500/80');
+        // Feedback for opponent (locked out)
+        showFeedback(oppFeedbackEl, `🔒 對手已搶先得分！`, 'text-amber-400 bg-slate-900/90 border-2 border-amber-500/50');
+
+        document.getElementById('round-status-text').textContent = isP1 ? '左側玩家搶答成功！(+1分)' : '右側玩家搶答成功！(+1分)';
+        updateScoreUI();
+
+        // Check if this player reached the target score to win
+        if (myState.score >= state.targetScore) {
+          triggerVictory(playerNum);
+          return;
+        }
+
+        // Advance to next round after 1.2s delay
+        setTimeout(() => {
+          if (!state.isGameOver) {
+            startNewRound();
+          }
+        }, 1200);
+
+      } else {
+        /* 
+          =======================================
+          CASE 2: WRONG ANSWER
+          =======================================
+          - This player is LOCKED OUT for this round.
+          - Opponent CAN STILL ANSWER ("對手則可以作答").
+        */
+        myState.streak = 0;
+        myState.locked = true;
+        myState.isWrongThisRound = true;
+
+        playSoundEffect('wrong');
+        updateScoreUI();
+
+        // Lock indicator for this player
+        document.getElementById(isP1 ? 'p1-lock-indicator' : 'p2-lock-indicator').classList.remove('hidden');
+        document.getElementById(isP1 ? 'p1-prompt-hint' : 'p2-prompt-hint').textContent = '❌ 答錯鎖定';
+        document.getElementById(isP1 ? 'p1-prompt-hint' : 'p2-prompt-hint').className = 'text-rose-400 font-bold';
+
+        showFeedback(feedbackEl, `❌ 答錯 (${selectedSolf})`, 'text-rose-400 bg-rose-950/80 border-2 border-rose-500/80');
+
+        // Shake panel animation
+        panelEl.classList.remove('shake-anim');
+        void panelEl.offsetWidth;
+        panelEl.classList.add('shake-anim');
+        setTimeout(() => panelEl.classList.remove('shake-anim'), 450);
+
+        // Check if opponent is already locked/wrong too
+        if (oppState.isWrongThisRound) {
+          // Both answered wrong! End this round without score.
+          state.roundActive = false;
+          document.getElementById('round-status-text').textContent = '雙方皆答錯，進入下一題...';
+          setTimeout(() => {
+            if (!state.isGameOver) {
+              startNewRound();
+            }
+          }, 1100);
+        } else {
+          // Opponent has a chance to steal!
+          document.getElementById('round-status-text').textContent = isP1 ? '左側答錯！右側玩家請作答！' : '右側答錯！左側玩家請作答！';
+          document.getElementById(isP1 ? 'p2-prompt-hint' : 'p1-prompt-hint').textContent = '⚡ 對手失誤，請把握答題！';
+        }
+      }
+    }
+
+    function showFeedback(el, text, classNames) {
+      el.innerHTML = `<span>${text}</span>`;
+      el.className = `absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-2xl sm:text-3xl font-black transition-opacity duration-200 opacity-100 rounded-2xl ${classNames}`;
+      setTimeout(() => {
+        el.className = `absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-2xl sm:text-3xl font-black transition-opacity duration-300 opacity-0 rounded-2xl ${classNames}`;
+      }, 900);
+    }
+
+    function updateScoreUI() {
+      document.getElementById('p1-score').textContent = state.p1.score;
+      document.getElementById('p1-streak').textContent = state.p1.streak;
+      document.getElementById('p2-score').textContent = state.p2.score;
+      document.getElementById('p2-streak').textContent = state.p2.streak;
+    }
+
+    function triggerVictory(winnerPlayer) {
+      state.isGameOver = true;
+      state.roundActive = false;
+      playSoundEffect('win');
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 140,
+          spread: 90,
+          origin: { y: 0.6 }
+        });
+      }
+
+      const modal = document.getElementById('winner-modal');
+      const title = document.getElementById('winner-title');
+      const trophy = document.getElementById('winner-trophy');
+
+      if (winnerPlayer === 1) {
+        title.textContent = '🎉 左側玩家 (Player 1) 獲勝！';
+        title.className = 'text-2xl sm:text-3xl font-black text-cyan-400 mb-2';
+        trophy.textContent = '👑';
+      } else {
+        title.textContent = '🎉 右側玩家 (Player 2) 獲勝！';
+        title.className = 'text-2xl sm:text-3xl font-black text-pink-400 mb-2';
+        trophy.textContent = '🏆';
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function resetGame() {
+      state.isGameOver = false;
+      state.p1.score = 0;
+      state.p1.streak = 0;
+      state.p1.locked = false;
+      state.p1.isWrongThisRound = false;
+
+      state.p2.score = 0;
+      state.p2.streak = 0;
+      state.p2.locked = false;
+      state.p2.isWrongThisRound = false;
+
+      updateScoreUI();
+      document.getElementById('winner-modal').classList.add('hidden');
+      startNewRound();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Solfege button bindings using pointerdown for 0-latency touch response
+      const buttons = document.querySelectorAll('.solfege-btn');
+      buttons.forEach(btn => {
+        const player = parseInt(btn.dataset.player, 10);
+        const note = btn.dataset.note;
+
+        btn.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          initAudio();
+          handleAnswer(player, note);
+        });
+      });
+
+      // Face-to-face rotation toggle (for two players sitting opposite around a tablet)
+      const rotateBtn = document.getElementById('rotate-left-btn');
+      const panelLeft = document.getElementById('panel-left');
+      rotateBtn.addEventListener('click', () => {
+        state.isLeftFlipped = !state.isLeftFlipped;
+        if (state.isLeftFlipped) {
+          panelLeft.classList.add('face-to-face');
+          rotateBtn.classList.add('bg-cyan-600', 'text-white');
+        } else {
+          panelLeft.classList.remove('face-to-face');
+          rotateBtn.classList.remove('bg-cyan-600', 'text-white');
+        }
+      });
+
+      // Mute audio toggle
+      const audioBtn = document.getElementById('audio-btn');
+      audioBtn.addEventListener('click', () => {
+        isMuted = !isMuted;
+        audioBtn.textContent = isMuted ? '🔇' : '🔊';
+      });
+
+      // Global click audio initializer
+      document.body.addEventListener('click', initAudio, { once: true });
+      document.getElementById('audio-start-banner')?.addEventListener('click', initAudio);
+
+      // Reset and Modal Restart buttons
+      document.getElementById('reset-btn').addEventListener('click', resetGame);
+      document.getElementById('modal-restart-btn').addEventListener('click', resetGame);
+
+      // Start first round
+      startNewRound();
+    });
+  </script>
+</body>
+</html>
