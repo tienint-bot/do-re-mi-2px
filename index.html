@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>五線譜音高雙人對決 (ㄉㄛ、ㄖㄨㄝ、ㄇㄧ)</title>
+  <title>五線譜音高雙人對決 (c1~c2)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -68,7 +68,7 @@
         <h1 class="font-black text-base sm:text-lg md:text-xl tracking-wide bg-gradient-to-r from-cyan-400 via-sky-300 to-pink-400 bg-clip-text text-transparent">
           五線譜音感大對決
         </h1>
-        <p class="text-xs text-slate-400 hidden sm:block">題目範圍：$c^1 \sim e^1$（僅限 ㄉㄛ、ㄖㄨㄝ、ㄇㄧ）</p>
+        <p class="text-xs text-slate-400 hidden sm:block">題目範圍：$c^1 \sim c^2$（先答對者得分，答錯對手可作答）</p>
       </div>
     </div>
 
@@ -142,10 +142,14 @@
           <span>辨識上方五線譜音高：</span>
           <span id="p1-prompt-hint" class="text-cyan-400 font-bold">請搶答！</span>
         </div>
-        <div id="p1-btn-group" class="grid grid-cols-3 gap-2 sm:gap-3">
-          <button data-player="1" data-note="ㄉㄛ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-95 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄉㄛ</button>
-          <button data-player="1" data-note="ㄖㄨㄝ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-95 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄖㄨㄝ</button>
-          <button data-player="1" data-note="ㄇㄧ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-95 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄇㄧ</button>
+        <div id="p1-btn-group" class="grid grid-cols-7 gap-1 sm:gap-2">
+          <button data-player="1" data-note="ㄉㄛ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-90 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄉㄛ</button>
+          <button data-player="1" data-note="ㄖㄨㄝ" class="solfege-btn solfege-btn-re py-3 sm:py-4 px-0 rounded-xl font-black bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-90 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄖㄨㄝ</button>
+          <button data-player="1" data-note="ㄇㄧ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-90 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄇㄧ</button>
+          <button data-player="1" data-note="ㄈㄚ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-90 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄈㄚ</button>
+          <button data-player="1" data-note="ㄙㄛ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-90 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄙㄛ</button>
+          <button data-player="1" data-note="ㄌㄚ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-90 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄌㄚ</button>
+          <button data-player="1" data-note="ㄒㄧ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 active:scale-90 transition-all text-white shadow-md shadow-cyan-950/50 border-b-4 border-cyan-800">ㄒㄧ</button>
         </div>
       </div>
     </section>
@@ -188,10 +192,14 @@
           <span>辨識上方五線譜音高：</span>
           <span id="p2-prompt-hint" class="text-pink-400 font-bold">請搶答！</span>
         </div>
-        <div id="p2-btn-group" class="grid grid-cols-3 gap-2 sm:gap-3">
-          <button data-player="2" data-note="ㄉㄛ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-95 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄉㄛ</button>
-          <button data-player="2" data-note="ㄖㄨㄝ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-95 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄖㄨㄝ</button>
-          <button data-player="2" data-note="ㄇㄧ" class="solfege-btn py-4 sm:py-5 px-2 rounded-2xl font-black text-lg sm:text-2xl bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-95 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄇㄧ</button>
+        <div id="p2-btn-group" class="grid grid-cols-7 gap-1 sm:gap-2">
+          <button data-player="2" data-note="ㄉㄛ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-90 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄉㄛ</button>
+          <button data-player="2" data-note="ㄖㄨㄝ" class="solfege-btn solfege-btn-re py-3 sm:py-4 px-0 rounded-xl font-black bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-90 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄖㄨㄝ</button>
+          <button data-player="2" data-note="ㄇㄧ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-90 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄇㄧ</button>
+          <button data-player="2" data-note="ㄈㄚ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-90 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄈㄚ</button>
+          <button data-player="2" data-note="ㄙㄛ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-90 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄙㄛ</button>
+          <button data-player="2" data-note="ㄌㄚ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-90 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄌㄚ</button>
+          <button data-player="2" data-note="ㄒㄧ" class="solfege-btn py-3 sm:py-4 px-0.5 rounded-xl font-black text-xs sm:text-base md:text-lg bg-gradient-to-b from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 active:scale-90 transition-all text-white shadow-md shadow-pink-950/50 border-b-4 border-pink-800">ㄒㄧ</button>
         </div>
       </div>
     </section>
@@ -272,17 +280,17 @@
     // Line 5 (F5) -> y = 35
     // Line 4 (D5) -> y = 51
     // Line 3 (B4) -> y = 67
-    // Note list from c1 to e1 (Treble Clef C4 to E4)
-    // 5 lines:
-    // Line 5 (F5) -> y = 35
-    // Line 4 (D5) -> y = 51
-    // Line 3 (B4) -> y = 67
     // Line 2 (G4) -> y = 83 (Clef spiral center)
     // Line 1 (E4) -> y = 99
     const NOTE_POOL = [
       { id: 'C4', name: 'c1 (中央 C)', solfege: 'ㄉㄛ', freq: 'C4', step: -2, hasLedgerBelow: true },
       { id: 'D4', name: 'd1 (下加一間)', solfege: 'ㄖㄨㄝ', freq: 'D4', step: -1, hasLedgerBelow: false },
-      { id: 'E4', name: 'e1 (第一線)', solfege: 'ㄇㄧ', freq: 'E4', step: 0, hasLedgerBelow: false }
+      { id: 'E4', name: 'e1 (第一線)', solfege: 'ㄇㄧ', freq: 'E4', step: 0, hasLedgerBelow: false },
+      { id: 'F4', name: 'f1 (第一間)', solfege: 'ㄈㄚ', freq: 'F4', step: 1, hasLedgerBelow: false },
+      { id: 'G4', name: 'g1 (第二線)', solfege: 'ㄙㄛ', freq: 'G4', step: 2, hasLedgerBelow: false },
+      { id: 'A4', name: 'a1 (第二間)', solfege: 'ㄌㄚ', freq: 'A4', step: 3, hasLedgerBelow: false },
+      { id: 'B4', name: 'b1 (第三線)', solfege: 'ㄒㄧ', freq: 'B4', step: 4, hasLedgerBelow: false },
+      { id: 'C5', name: 'c2 (第三間)', solfege: 'ㄉㄛ', freq: 'C5', step: 5, hasLedgerBelow: false }
     ];
 
     // Global duel game state
@@ -338,14 +346,38 @@
 
       /* 
         Standard Classical G-Clef (Treble Clef):
-        Carefully tuned SVG path where the main inner spiral wraps exactly around y = 83 (2nd line G4).
+        5 Staff Lines:
+        Line 5 (top)    : y = 35
+        Line 4          : y = 51
+        Line 3 (middle) : y = 67
+        Line 2 (G-line) : y = 83  <- Spiral center precisely aligns here
+        Line 1 (bottom) : y = 99
+        
+        Using calibrated viewBox coordinates:
+        - Top loop extends gracefully up to y = 16 (well above Line 5 at y = 35) before curving back down
+        - Center spiral perfectly wraps around y = 83 (2nd line)
+        - Bottom spiral teardrop terminates below Line 1
       */
       const standardTrebleClefPath = `
-        <g fill="${clefColor}" transform="translate(36, 12) scale(0.88)">
-          <path d="M24.8 62.3 C23.1 59.5 20.2 58.1 16.4 58.1 C11.3 58.1 7.2 62.2 7.2 68.3 C7.2 74.2 11.5 78.9 17.5 78.9 C23.8 78.9 28.7 74.1 28.7 67.8 C28.7 62.4 25.4 58.3 20.6 55.7 L 22.1 46.8 C 24.8 48.3 27.9 49.3 31.2 49.3 C37.1 49.3 41.5 45.1 41.5 39.2 C41.5 33.1 36.8 28.6 30.7 28.6 C26.9 28.6 23.5 30.4 21.4 33.3 L 18.2 13.9 C20.3 11.8 23.4 10.4 26.8 10.4 C31.1 10.4 34.6 12.8 35.8 16.6 C36.2 17.8 37.3 18.5 38.6 18.5 C40.1 18.5 41.3 17.3 41.3 15.8 C41.3 15.1 41.0 14.4 40.5 13.8 C38.3 8.3 32.9 4.6 26.6 4.6 C21.8 4.6 17.4 6.8 14.5 10.4 C12.8 12.5 11.7 15.0 11.2 17.7 L 7.3 41.6 C5.6 43.4 4.3 45.6 3.4 48.1 C2.0 52.0 2.2 56.4 3.9 60.3 C5.8 64.6 9.4 67.8 13.9 69.1 L 12.7 61.6 C10.1 60.5 8.3 57.9 8.3 54.8 C8.3 50.8 11.4 47.4 15.6 47.0 L 19.3 70.3 C14.4 70.8 10.5 74.7 10.5 79.7 C10.5 85.3 15.2 89.8 21.0 89.8 C27.6 89.8 33.0 84.7 33.0 77.8 C33.0 70.9 28.8 65.5 22.8 63.3 L 24.8 62.3 Z M 20.3 38.1 C 21.8 35.8 24.3 34.2 27.2 34.2 C 30.5 34.2 33.1 36.7 33.1 40.1 C 33.1 43.4 30.6 45.9 27.4 45.9 C 24.8 45.9 22.6 44.3 21.5 42.1 L 20.3 38.1 Z M 16.7 73.6 C 13.4 73.6 10.8 70.9 10.8 67.7 C 10.8 64.4 13.4 61.8 16.7 61.8 C 19.1 61.8 21.2 63.2 22.1 65.4 L 16.7 73.6 Z"/>
-          <!-- Bottom hanging drop terminal -->
-          <circle cx="18.5" cy="104.5" r="5.2"/>
-        </g>
+        <svg x="32" y="15" width="80" height="116" viewBox="0 0 459.889 459.889" fill="${clefColor}">
+          <path d="M310.138,274.839c0.197-18.678-5.973-35.675-16.929-46.63c-14.351-14.351-36.018-17.934-56.75-11.495
+            c-4.476-19.904-9.113-39.879-13.671-59.445c3.706-4.763,7.307-9.278,10.782-13.634c24.694-30.958,42.536-53.327,38.402-92.602
+            c-3.566-33.879-15.748-45.525-25.339-49.33c-9.226-3.661-19.637-1.357-28.558,6.321c-20.27,17.447-35.488,64.636-21,127.011
+            c1.346,5.795,2.711,11.657,4.089,17.571c-8.521,11.282-17.693,24.235-26.945,39.363c-28.073,45.896-26.966,79.653-21.094,99.891
+            c5.945,20.491,19.521,37.243,37.244,45.959c17.589,8.65,35.056,12.09,51.405,10.454c2.894,19.703,4.808,37.689,5.328,53.007
+            c-5.372-2.577-11.572-4.057-18.175-4.057c-20.402,0-37,14.056-37,31.333c0,17.277,16.598,31.333,37,31.333
+            c19.905,0,34.485-13.283,36.596-26.11c3.518-21.373,1.309-53.042-4.184-90.106c10.505-3.993,20.278-10.368,28.993-19.083
+            C302.716,312.209,309.934,294.075,310.138,274.839z M231.124,23.182c1.796-1.546,4.242-3.184,6.544-3.184
+            c0.542,0,1.076,0.091,1.592,0.295c4.51,1.789,10.573,11.46,12.822,32.833c3.276,31.12-10.81,48.779-34.147,78.036
+            c-0.314,0.395-0.631,0.791-0.949,1.191c-0.143-0.615-0.286-1.229-0.428-1.842C203.191,72.96,218.399,34.136,231.124,23.182z
+            M199.197,319.871c-12.503-6.149-22.545-18.704-26.863-33.585c-6.811-23.475-0.259-52.48,18.948-83.882
+            c5.385-8.804,10.688-16.774,15.862-24.109c3.581,15.446,7.216,31.268,10.761,47.138c-4.702,3.035-9.2,6.646-13.377,10.822
+            c-3.905,3.905-3.905,10.237,0,14.142c3.906,3.906,10.236,3.906,14.143,0c1.275-1.276,2.59-2.482,3.935-3.618
+            c6.114,28.214,11.741,56.122,16.068,81.861C226.39,329.63,213.119,326.718,199.197,319.871z M228.929,439.889
+            c-9.056,0-17-5.296-17-11.333c0-6.037,7.944-11.333,17-11.333s17,5.296,17,11.333C245.929,434.594,237.985,439.889,228.929,439.889z
+            M276.192,310.449c-5.612,5.612-11.656,9.945-18.074,12.99c-4.641-27.383-10.698-57.018-17.317-87.194
+            c14.282-5.016,28.927-3.234,38.267,6.106C293.442,256.725,294.97,291.67,276.192,310.449z"/>
+        </svg>
       `;
 
       return `
